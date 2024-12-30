@@ -3,7 +3,6 @@ import axios from 'axios';
 import Modal from 'react-modal';
 import { Search, Loader2, X, ExternalLink, Clock, Globe, Languages } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-
 Modal.setAppElement('#root');
 
 const NewsFeed = () => {
@@ -68,6 +67,7 @@ const NewsFeed = () => {
       let url = 'https://api.currentsapi.services/v1/search?';
       const params = new URLSearchParams();
       
+      
       // Add API key first
       params.append('apiKey', apiKey);
       
@@ -79,6 +79,7 @@ const NewsFeed = () => {
       
       const response = await axios.get(`${url}${params.toString()}`);
       
+
       if (response.data && response.data.news) {
         setArticles(response.data.news);
       } else {

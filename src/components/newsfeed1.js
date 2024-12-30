@@ -1,89 +1,158 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import Modal from 'react-modal';
-import { useAuth } from '../contexts/AuthContext';
-import { Search, Loader2, X, ExternalLink, Clock, Building2 } from 'lucide-react';
+import { Search, Loader2, X, ExternalLink, Clock, Globe, Languages } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {Categories} from './DataValues';
+import {Countries} from './DataValues';
+import {Language} from './DataValues';
 
 Modal.setAppElement('#root');
 
 const NewsFeed = () => {
   const [articles, setArticles] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
-  const [categories] = useState(['general', 'technology', 'business', 'sports', 'entertainment', 'health']);
-  const [selectedCategory, setSelectedCategory] = useState('general');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState('ta');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [nextPage, setNextPage] = useState(null); // Track the nextPage token
+  const [hasMore, setHasMore] = useState(true); // Track if there are more pages
   const [loading, setLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const { currentUser } = useAuth();
+  const categories = Categories;
+  const countries = Countries;
+  const languages = Language;
+  const observer = useRef();
 
-  // Keep existing fetch functions
-  const fetchNewsByCategory = async (category) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${process.env.REACT_APP_NEWS_API_KEY}`
-      );
-      setArticles(response.data.articles);
-    } catch (error) {
-      console.error("Error fetching news:", error);
-    } finally {
-      setLoading(false);
-    }
+  // Format countries/languages data for display
+  const formatOptionsData = (data) => {
+    const formatted = {};
+    Object.entries(data).forEach(([name, code]) => {
+      formatted[name] = code;
+    });
+    return formatted;
   };
 
-  const fetchNewsBySearch = async (query) => {
+  // Fetch available options from API
+  useEffect(() => {
+    
+  }, []);
+
+  const fetchNews = async (pageToken = null, flag=true) => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&apiKey=${process.env.REACT_APP_NEWS_API_KEY}`
-      );
-      setArticles(response.data.articles);
+      const apiKey = process.env.REACT_APP_CURRENTS_API_KEY;
+      const apiKeyNewsData = process.env.REACT_APP_NEWSDATA_API_KEY;
+      let url = 'https://api.currentsapi.services/v1/search?';
+      const params = new URLSearchParams();
+      const paramsNewsData = new URLSearchParams();
+      
+      paramsNewsData.append('apikey', 'pub_63789c57a1d3d780d7b4cdffc40107db30813');
+      // Add API key first
+      params.append('apiKey', apiKey);
+      
+      // Add active filters
+      if (pageToken) paramsNewsData.append('page', pageToken);
+      if (selectedCountry) paramsNewsData.append('country', selectedCountry);
+      if (selectedLanguage) paramsNewsData.append('language', selectedLanguage);
+      if (selectedCategory) paramsNewsData.append('category', selectedCategory);
+      if (searchQuery.trim()) paramsNewsData.append('q', searchQuery.trim());
+      
+      // const response = await axios.get(`${url}${params.toString()}`);
+
+      const RSSresponse = await axios.get(`https://newsdata.io/api/1/latest?${paramsNewsData.toString()}`);
+
+      if (RSSresponse.data && RSSresponse.data.results) {
+        if (flag) setArticles(RSSresponse.data.results);
+        else{
+          setArticles((prev) => [...prev, ...RSSresponse.data.results]);
+          setNextPage(RSSresponse.data.nextPage || null);
+          setHasMore(!!RSSresponse.data.nextPage);
+        }
+      } else {
+        setHasMore(false);
+        setArticles([]);
+      }
     } catch (error) {
       console.error("Error fetching news:", error);
+      setArticles([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!isSearching) {
-      fetchNewsByCategory(selectedCategory);
+    // Only fetch if at least one filter is active or there's a search query
+    if (selectedCountry || selectedLanguage || selectedCategory ) {
+      fetchNews();
     }
-  }, [selectedCategory, isSearching]);
+  }, [selectedCategory, selectedCountry, selectedLanguage ]);
 
-  const handleCategoryClick = (category) => {
-    setSelectedCategory(category);
-    setIsSearching(false);
-    setSearchQuery('');
-  };
+  const lastArticleRef = useRef();
+
+  useEffect(() => {
+    if (loading || !hasMore) return;
+
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && nextPage) {
+          fetchNews(nextPage,false);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (lastArticleRef.current) observer.current.observe(lastArticleRef.current);
+  }, [loading, hasMore, nextPage]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setIsSearching(true);
-      await fetchNewsBySearch(searchQuery);
+      setSelectedCategory(''); // Optional: clear other filters if desired
+      setSelectedCountry('');
+      setSelectedLanguage('');
+      await fetchNews();
     }
   };
-
+  const handleSelectArticle = (article) => {
+    setSelectedArticle(article);
+    setAiSummary(''); // Reset the summary whenever a new article is selected
+  };
+  
   const handleClearSearch = () => {
     setSearchQuery('');
     setIsSearching(false);
-    fetchNewsByCategory(selectedCategory);
+    fetchNews();
   };
 
-  const openModal = (article) => {
-    setSelectedArticle(article);
-    setAiSummary('');
+  const handleFilterChange = (type, value) => {
+    switch (type) {
+      case 'country':
+        setSelectedCountry(value);
+        setSelectedCategory(''); // Clear only category, keep language
+        break;
+      case 'language':
+        setSelectedLanguage(value);
+        setSelectedCategory(''); // Clear only category, keep country
+        break;
+      case 'category':
+        setSelectedCategory(value);
+        setSelectedCountry(''); // Clear both country and language
+        setSelectedLanguage('');
+        break;
+      default:
+        break;
+    }
+    setSearchQuery(''); // Clear search query when changing filters
+    setIsSearching(false); // Reset search state
   };
-
-  const closeModal = () => {
-    setSelectedArticle(null);
-    setAiSummary('');
-  };
-
+  
   const generateSummary = async (article) => {
     setIsSummarizing(true);
     try {
@@ -92,8 +161,7 @@ const NewsFeed = () => {
 
       const prompt = `Please provide a concise summary of the following news article in 3-4 sentences: 
       Title: ${article.title}
-      Content: ${article.content}
-      Description: ${article.description}`;
+      Content: ${article.description}`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -109,7 +177,7 @@ const NewsFeed = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        {/* Search and Categories Section */}
+        {/* Filters Section */}
         <div className="space-y-6">
           {/* Search Bar */}
           <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
@@ -133,21 +201,62 @@ const NewsFeed = () => {
               )}
               <button
                 type="submit"
-                className="absolute right-3 top-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
               >
                 Search
               </button>
             </div>
           </form>
 
+          {/* Filters */}
+          <div className="flex flex-wrap gap-4 justify-center items-center">
+            {/* Country Selector */}
+            <div className="relative min-w-[200px]">
+              <Globe className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <select
+                value={selectedCountry}
+                onChange={(e) => handleFilterChange('country', e.target.value)}
+                className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg appearance-none outline-none transition-colors ${
+                  selectedCountry ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'
+                }`}
+              >
+                <option value="">All Countries</option>
+                {Object.entries(countries).map(([name, code]) => (
+                  <option key={code} value={code}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Language Selector */}
+            <div className="relative min-w-[200px]">
+              <Languages className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <select
+                value={selectedLanguage}
+                onChange={(e) => handleFilterChange('language', e.target.value)}
+                className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg appearance-none outline-none transition-colors ${
+                  selectedLanguage ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'
+                }`}
+              >
+                <option value="">All Languages</option>
+                {Object.entries(languages).map(([name, code]) => (
+                  <option key={code} value={code}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           {/* Categories */}
           <div className="flex flex-wrap gap-2 justify-center">
             {categories.map((category) => (
               <button
                 key={category}
-                onClick={() => handleCategoryClick(category)}
+                onClick={() => handleFilterChange('category', category)}
                 className={`px-6 py-2.5 rounded-full capitalize transition-all duration-200 ${
-                  selectedCategory === category && !isSearching
+                  selectedCategory === category
                     ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25 scale-105'
                     : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
                 }`}
@@ -157,20 +266,22 @@ const NewsFeed = () => {
             ))}
           </div>
 
-          {/* Current View Indicator */}
+          {/* Active Filters Indicator */}
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-800">
               {isSearching ? (
-                <span className="flex items-center justify-center gap-2">
-                  Search Results for <span className="text-blue-500">"{searchQuery}"</span>
-                </span>
+                <span>Search Results for "{searchQuery}"</span>
               ) : (
-                <span className="capitalize">{selectedCategory} News</span>
+                <span>
+                  {selectedCategory && `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} News`}
+                  {selectedCountry && `News from ${Object.keys(countries).find(name => countries[name] === selectedCountry)}`}
+                  {selectedLanguage && `News in ${Object.keys(languages).find(name => languages[name] === selectedLanguage)}`}
+                  {!selectedCategory && !selectedCountry && !selectedLanguage && 'Latest News'}
+                </span>
               )}
             </h2>
           </div>
         </div>
-
         {/* Loading State */}
         {loading && (
           <div className="flex justify-center items-center py-12">
@@ -186,23 +297,20 @@ const NewsFeed = () => {
           {articles.map((article, index) => (
             <div
               key={index}
-              onClick={() => openModal(article)}
+              onClick={() => handleSelectArticle(article)}
               className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden cursor-pointer border border-gray-100 hover:border-blue-100"
+              ref={articles.length === index + 1 ? lastArticleRef : null}
             >
               <div className="aspect-video relative overflow-hidden bg-gray-100">
-                {article.urlToImage ? (
+                {article.image_url && (
                   <img
-                    src={article.urlToImage}
+                    src={article.image_url}
                     alt={article.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                     onError={(e) => {
                       e.target.src = '/api/placeholder/400/320';
                     }}
                   />
-                ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                    <Building2 className="h-12 w-12 text-gray-300" />
-                  </div>
                 )}
               </div>
               <div className="p-6 space-y-4">
@@ -213,9 +321,9 @@ const NewsFeed = () => {
                 <div className="flex items-center justify-between text-sm text-gray-500 pt-2">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                    <span>{new Date(article.pubDate).toLocaleDateString()}</span>
                   </div>
-                  <span className="font-medium">{article.source.name}</span>
+                  <span className="font-medium">{article.source_name}</span>
                 </div>
               </div>
             </div>
@@ -226,7 +334,7 @@ const NewsFeed = () => {
         {articles.length === 0 && !loading && (
           <div className="text-center py-12">
             <div className="bg-white rounded-lg shadow-sm p-6 max-w-md mx-auto">
-              <p className="text-gray-600">No articles found. Try a different search term or category.</p>
+              <p className="text-gray-600">No articles found. Try different filters or search terms.</p>
             </div>
           </div>
         )}
@@ -234,7 +342,7 @@ const NewsFeed = () => {
         {/* Article Modal */}
         <Modal
           isOpen={!!selectedArticle}
-          onRequestClose={closeModal}
+          onRequestClose={() => setSelectedArticle(null)}
           className="max-w-3xl mx-auto mt-12 mb-12 bg-white rounded-2xl shadow-xl outline-none p-0 relative"
           overlayClassName="fixed inset-0 bg-black/50 flex items-start justify-center overflow-y-auto px-4"
         >
@@ -243,9 +351,11 @@ const NewsFeed = () => {
               {/* Modal Header */}
               <div className="p-6">
                 <div className="flex justify-between items-start gap-4">
-                  <h2 className="text-2xl font-bold text-gray-800 leading-tight">{selectedArticle.title}</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 leading-tight">
+                    {selectedArticle.title}
+                  </h2>
                   <button
-                    onClick={closeModal}
+                    onClick={() => setSelectedArticle(null)}
                     className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
                     <X className="h-5 w-5 text-gray-500" />
@@ -254,20 +364,20 @@ const NewsFeed = () => {
                 <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    {new Date(selectedArticle.publishedAt).toLocaleDateString()}
+                    {new Date(selectedArticle.pubDate).toLocaleDateString()}
                   </span>
-                  <span className="font-medium">{selectedArticle.source.name}</span>
-                  {selectedArticle.author && (
-                    <span className="text-gray-500">By {selectedArticle.author}</span>
+                  <span className="font-medium">{selectedArticle.author}</span>
+                  {selectedArticle.category && (
+                    <span className="text-gray-500">{selectedArticle.category.join(', ')}</span>
                   )}
                 </div>
               </div>
 
               {/* Article Image */}
-              {selectedArticle.urlToImage && (
+              {selectedArticle.image_url && (
                 <div className="relative aspect-video">
                   <img
-                    src={selectedArticle.urlToImage}
+                    src={selectedArticle.image_url}
                     alt={selectedArticle.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -311,7 +421,7 @@ const NewsFeed = () => {
 
                 {/* Article Content */}
                 <div className="prose prose-blue max-w-none">
-                  <p className="text-gray-700 leading-relaxed">{selectedArticle.content}</p>
+                  <p className="text-gray-700 leading-relaxed">{selectedArticle.description}</p>
                 </div>
 
                 {/* Action Buttons */}
