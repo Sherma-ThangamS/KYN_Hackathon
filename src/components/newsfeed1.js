@@ -1,11 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useRef } from 'react';
+import { Language } from './DataValues';
 import Modal from 'react-modal';
-import { Search, Loader2, X, ExternalLink, Clock, Globe, Languages } from 'lucide-react';
+import axios from 'axios';
+import { Search, X, Globe, Languages, Clock, Loader2, ExternalLink } from 'lucide-react';
+import { Categories, Countries } from './DataValues';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import {Categories} from './DataValues';
-import {Countries} from './DataValues';
-import {Language} from './DataValues';
 
 Modal.setAppElement('#root');
 
@@ -172,8 +171,28 @@ const NewsFeed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+    <div className="min-h-screen w-full overflow-hidden relative">
+      {/* Full-screen animated background */}
+      <div className="fixed inset-0 bg-white">
+        {/* Animated blobs */}
+        <div 
+          className="absolute -top-1/2 -left-1/2 w-[1000px] h-[1000px] bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob"
+        />
+        <div 
+          className="absolute -top-1/2 -right-1/2 w-[1000px] h-[1000px] bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob-reverse"
+          style={{ animationDelay: '-2s' }}
+        />
+        <div 
+          className="absolute -bottom-1/2 left-1/4 w-[1000px] h-[1000px] bg-pink-500/50 rounded-full mix-blend-multiply filter blur-3xl animate-blob"
+          style={{ animationDelay: '-4s' }}
+        />
+        <div 
+          className="absolute -top-1/4 left-1/3 w-[800px] h-[800px] bg-blue-300/50 rounded-full mix-blend-multiply filter blur-3xl animate-blob-spin"
+          style={{ animationDelay: '-3s' }}
+        />
+      </div>
+      <div className="relative max-w-7xl mx-auto px-4 py-8 space-y-8">
+        {/* Rest of the component code remains the same */}
         {/* Filters Section */}
         <div className="space-y-6">
           {/* Search Bar */}

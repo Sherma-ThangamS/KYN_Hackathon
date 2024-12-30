@@ -2,9 +2,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Login from './components/Login';
+import Login from './components/login1';
 import NewsFeed from './components/newsfeed1';
-import Navbar from './components/Navbar';
+import Navbar from './components/navibar';
 
 function App() {
   return (
