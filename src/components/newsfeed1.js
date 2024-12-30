@@ -66,7 +66,9 @@ const NewsFeed = () => {
       const RSSresponse = await axios.get(`https://newsdata.io/api/1/latest?${paramsNewsData.toString()}`);
 
       if (RSSresponse.data && RSSresponse.data.results) {
-        if (flag) setArticles(RSSresponse.data.results);
+        if (flag==true) {
+          setArticles(RSSresponse.data.results);
+        }
         else{
           setArticles((prev) => [...prev, ...RSSresponse.data.results]);
           setNextPage(RSSresponse.data.nextPage || null);
