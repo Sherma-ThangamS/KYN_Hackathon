@@ -41,75 +41,70 @@ const NewsFeed = () => {
     
   }, []);
 
-  const fetchNews = async (pageToken = null, flag=true) => {
+  const fetchNews = async (pageToken = null, isNewSearch = true) => {
     setLoading(true);
     try {
-      const apiKey = process.env.REACT_APP_CURRENTS_API_KEY;
-      const apiKeyNewsData = process.env.REACT_APP_NEWSDATA_API_KEY;
-      let url = 'https://api.currentsapi.services/v1/search?';
-      const params = new URLSearchParams();
       const paramsNewsData = new URLSearchParams();
-      
       paramsNewsData.append('apikey', 'pub_63789c57a1d3d780d7b4cdffc40107db30813');
-      // Add API key first
-      params.append('apiKey', apiKey);
-      
+  
       // Add active filters
       if (pageToken) paramsNewsData.append('page', pageToken);
       if (selectedCountry) paramsNewsData.append('country', selectedCountry);
       if (selectedLanguage) paramsNewsData.append('language', selectedLanguage);
       if (selectedCategory) paramsNewsData.append('category', selectedCategory);
       if (searchQuery.trim()) paramsNewsData.append('q', searchQuery.trim());
-      
-      // const response = await axios.get(`${url}${params.toString()}`);
-
-      const RSSresponse = await axios.get(`https://newsdata.io/api/1/latest?${paramsNewsData.toString()}`);
-
+  
+      const RSSresponse = await axios.get(
+        `https://newsdata.io/api/1/latest?${paramsNewsData.toString()}`
+      );
+  
       if (RSSresponse.data && RSSresponse.data.results) {
-        if (flag==true) {
+        if (isNewSearch) {
           setArticles(RSSresponse.data.results);
-        }
-        else{
+        } else {
           setArticles((prev) => [...prev, ...RSSresponse.data.results]);
-          setNextPage(RSSresponse.data.nextPage || null);
-          setHasMore(!!RSSresponse.data.nextPage);
         }
+        setNextPage(RSSresponse.data.nextPage || null);
+        setHasMore(!!RSSresponse.data.nextPage);
       } else {
         setHasMore(false);
         setArticles([]);
       }
     } catch (error) {
-      console.error("Error fetching news:", error);
+      console.error('Error fetching news:', error);
       setArticles([]);
     } finally {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
-    // Only fetch if at least one filter is active or there's a search query
-    if (selectedCountry || selectedLanguage || selectedCategory ) {
-      fetchNews();
+    if (selectedCountry || selectedLanguage || selectedCategory) {
+      fetchNews(null, true);
     }
-  }, [selectedCategory, selectedCountry, selectedLanguage ]);
-
+  }, [selectedCategory, selectedCountry, selectedLanguage]);
+  
   const lastArticleRef = useRef();
-
+  
   useEffect(() => {
     if (loading || !hasMore) return;
-
+  
     if (observer.current) observer.current.disconnect();
-
+  
     observer.current = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && nextPage) {
-          fetchNews(nextPage,false);
+          fetchNews(nextPage, false);
         }
       },
-      { threshold: 1.0 }
+      { threshold: 0.5 } // Adjusted threshold for better sensitivity
     );
-
+  
     if (lastArticleRef.current) observer.current.observe(lastArticleRef.current);
+  
+    return () => {
+      if (observer.current) observer.current.disconnect();
+    };
   }, [loading, hasMore, nextPage]);
 
   const handleSearch = async (e) => {
