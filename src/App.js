@@ -2,8 +2,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Login from './components/login1';
-import NewsFeed from './components/newsfeed1';
+import Login from './components/Login';
+import NewsFeed from './components/NewsFeed';
 import Navbar from './components/Navbar';
 
 function App() {
