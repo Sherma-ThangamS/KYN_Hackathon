@@ -111,9 +111,9 @@ const NewsFeed = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setIsSearching(true);
-      setSelectedCategory(''); // Optional: clear other filters if desired
-      setSelectedCountry('');
-      setSelectedLanguage('');
+      // setSelectedCategory(''); // Optional: clear other filters if desired
+      // setSelectedCountry('');
+      // setSelectedLanguage('');
       await fetchNews();
     }
   };
@@ -132,16 +132,16 @@ const NewsFeed = () => {
     switch (type) {
       case 'country':
         setSelectedCountry(value);
-        setSelectedCategory(''); // Clear only category, keep language
+        // setSelectedCategory(''); // Clear only category, keep language
         break;
       case 'language':
         setSelectedLanguage(value);
-        setSelectedCategory(''); // Clear only category, keep country
+        // setSelectedCategory(''); // Clear only category, keep country
         break;
       case 'category':
         setSelectedCategory(value);
-        setSelectedCountry(''); // Clear both country and language
-        setSelectedLanguage('');
+        // setSelectedCountry(''); // Clear both country and language
+        // setSelectedLanguage('');
         break;
       default:
         break;
