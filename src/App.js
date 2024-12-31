@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Login';
 import NewsFeed from './components/NewsFeed';
 import Navbar from './components/Navbar';
+require('dotenv').config()
 
 function App() {
   return (
