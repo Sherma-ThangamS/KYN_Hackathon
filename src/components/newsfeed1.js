@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Language } from './DataValues';
+import { Language, LanguageToVoiceMap } from './DataValues';
 import Modal from 'react-modal';
 import axios from 'axios';
 import { Search, X, Globe, Languages, Clock, Loader2, ExternalLink } from 'lucide-react';
@@ -8,8 +8,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-
 Modal.setAppElement('#root');
+// PlayHT.init({
+//   userId: 'ihBrfazFdqRowQV7gZeEiwqe5l23',
+//   apiKey: '10d59e8aa5a442298e6c1e0d950de7e9',
+// });
 
 const NewsFeed = () => {
   const [articles, setArticles] = useState([]);
@@ -280,40 +283,39 @@ const NewsFeed = () => {
   const speakDescription = (description, language) => {
     if (!description) {
       if (isSpeaking) {
-        speechSynthesis.cancel();
+        window.responsiveVoice.cancel();
         setIsSpeaking(false);
       }
       return;
     }
-
+  
     // Check if speech is already happening and stop it
     if (isSpeaking) {
-      speechSynthesis.cancel();
+      window.responsiveVoice.cancel();
       setIsSpeaking(false);
       return;
     }
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(description);
-
-      // Set language dynamically based on the article's language
-      const supportedLanguages = {
-        tamil: 'ta-IN',
-        english: 'en-US',
-        hindi: 'hi-IN',
-        french: 'fr-FR', // Add more as needed
-      };
-      utterance.lang = supportedLanguages[language] || 'en-US'; // Default to English if not found
-
-      utterance.rate = 1; // Adjust speed (1 is normal)
-      utterance.pitch = 1; // Adjust pitch (1 is normal)
-
-      utterance.onstart = () => setIsSpeaking(true); // Mark as speaking
-      utterance.onend = () => setIsSpeaking(false); // Mark as not speaking when done
-
-      speechSynthesis.speak(utterance);
-    } else {
-      alert('Sorry, your browser does not support text-to-speech.');
+  
+    let lang = LanguageToVoiceMap[language.toLowerCase()];
+    if (!lang) {
+      lang = 'US English Female';
     }
+  
+    console.log(lang);
+  
+    setIsSpeaking(true); // Set speaking state to true
+    console.log("Started");
+  
+    window.responsiveVoice.speak(description, lang, {
+      onend: () => {
+        console.log("Speech ended");
+        setIsSpeaking(false); // Reset speaking state after speech ends
+      },
+      onerror: () => {
+        console.error("Speech failed");
+        setIsSpeaking(false); // Reset speaking state if an error occurs
+      },
+    });
   };
 
 

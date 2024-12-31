@@ -124,3 +124,18 @@ export const Categories = [
     "food", "health", "lifestyle", "other", "politics", "science", "sports",
     "technology", "top", "tourism", "world"
   ];
+
+  export const LanguageToVoiceMap = {
+    bengali: "Bengali Female",
+    english: "US English Female", 
+    gujarati: "Gujarati Female",
+    hindi: "Hindi Female",
+    kannada: "Kannada Female",
+    malayalam: "Malayalam Female",
+    maltese: "Maltese Female",
+    marathi: "Marathi Female",
+    nepali: "Nepali Female",
+    punjabi: "Punjabi Female",
+    tamil: "Tamil Female",
+    telugu: "Telugu Female",
+  };
