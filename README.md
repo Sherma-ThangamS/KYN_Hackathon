@@ -17,8 +17,8 @@ The application provides users with a personalized news feed by leveraging their
 - Articles previously viewed.
 - User likes and dislikes.
 
-### 4. Like/Dislike Feature
-Users can express their preferences for news articles by liking or disliking them, contributing to further personalization and improving the user experience.
+### 4. Reaction Feature
+Users can react to news articles using a predefined set of emojis. These reactions contribute to the personalization of their news feed by analyzing user preferences based on their chosen emojis, enhancing the user experience.
 
 ### 5. Text-to-Audio Feature
 Newsify incorporates a **text-to-audio** feature, enabling users to listen to news articles, making the app accessible to visually impaired users or those who prefer an audio format.
