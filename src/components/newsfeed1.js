@@ -44,7 +44,7 @@ const NewsFeed = () => {
     setLoading(true);
     try {
       const paramsNewsData = new URLSearchParams();
-      paramsNewsData.append('apikey', 'pub_63789c57a1d3d780d7b4cdffc40107db30813');
+      paramsNewsData.append('apikey', process.env.REACT_APP_NEWS_DATA_API_KEY);
   
       // Add active filters
       if (pageToken) paramsNewsData.append('page', pageToken);
