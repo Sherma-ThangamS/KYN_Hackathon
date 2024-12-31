@@ -21,7 +21,7 @@ const Navbar = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="text-xl font-bold text-gray-800" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            News Feed
+            Newsify
           </Link>
           {currentUser && (
             <div className="flex items-center gap-4">

@@ -1,17 +1,15 @@
-// App.js
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Login from './components/Login';
-import NewsFeed from './components/newsfeed1';
-import Navbar from './components/navibar';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import Navbar from "./components/Navbar";
+import NewsFeed from "./components/NewsFeed";
+import Login from "./components/Login";
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-50">
-          <Navbar />
+          <ConditionalNavbar />
           <div className="max-w-6xl mx-auto p-6 mt-[10vh]">
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -30,6 +28,12 @@ function App() {
     </AuthProvider>
   );
 }
+
+// Component to conditionally render the Navbar
+const ConditionalNavbar = () => {
+  const location = useLocation();
+  return location.pathname === "/" ? <Navbar /> : null;
+};
 
 // PrivateRoute component to protect routes
 const PrivateRoute = ({ children }) => {
