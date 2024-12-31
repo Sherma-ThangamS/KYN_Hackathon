@@ -15,7 +15,7 @@ News articles are categorized into various topics such as politics, technology, 
 ### 3. Personalized News Feeds
 The application provides users with a personalized news feed by leveraging their previous interactions with the platform. Personalized content is based on:
 - Articles previously viewed.
-- User likes and dislikes.
+- User Expressions to the articles.
 
 ### 4. Reaction Feature
 Users can react to news articles using a predefined set of emojis. These reactions contribute to the personalization of their news feed by analyzing user preferences based on their chosen emojis, enhancing the user experience.
@@ -34,6 +34,7 @@ The application uses **AI summarization** to generate concise summaries of news 
 - **Frontend**: React.js,Tailwind CSS
 - **Backend**: Node.js 
 - **AI Summarization**: Gemini-1.5-pro-latest
+- **DataBase**: NoSQL(Firestore)
 - **Text-to-Audio**: ResponsiveVoice JS
 
 ---
@@ -43,7 +44,7 @@ The application uses **AI summarization** to generate concise summaries of news 
 1. **Clone the Repository**
    ```bash
    git clone  https://github.com/Sherma-ThangamS/KYN_Hackathon.git
-   cd newsify
+   cd KYN_Hackathon
    ```
    
 2. **Install Dependencies**
