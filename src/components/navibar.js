@@ -27,7 +27,7 @@ const Navbar = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <img
-                  src={currentUser.photoURL}
+                  src={currentUser.photoURL||'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTtuphMb4mq-EcVWhMVT8FCkv5dqZGgvn_QiA&s'}
                   alt="Profile"
                   className="w-8 h-8 rounded-full"
                 />

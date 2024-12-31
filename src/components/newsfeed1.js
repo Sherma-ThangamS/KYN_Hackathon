@@ -6,7 +6,7 @@ import { Search, X, Globe, Languages, Clock, Loader2, ExternalLink } from 'lucid
 import { Categories, Countries } from './DataValues';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useAuth } from '../contexts/AuthContext';
-import {  db } from '../firebase';
+import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 
 Modal.setAppElement('#root');
@@ -19,11 +19,12 @@ const NewsFeed = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('ta');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [nextPage, setNextPage] = useState(null); 
-  const [hasMore, setHasMore] = useState(true); 
+  const [nextPage, setNextPage] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [selectedEmoji, setSelectedEmoji] = useState(null);
   const categories = Categories;
   const countries = Countries;
   const languages = Language;
@@ -58,32 +59,32 @@ const NewsFeed = () => {
       if (searchQuery.trim()) paramsNewsData.append('q', searchQuery.trim());
       if (selectedCategory === "For you") {
         console.log(auth.categoryClickCount);
-      
+
         // Filter and sort categories based on count
         const sortedCategories = Object.entries(auth.categoryClickCount)
           .filter(([, count]) => count > 0) // Exclude categories with zero count
           .sort(([, countA], [, countB]) => countB - countA)
           .slice(0, 5)
           .map(([category]) => category);
-      
+
         if (sortedCategories.length === 0) {
           console.log("No categories with interaction count greater than zero.");
           setArticles([]); // Clear articles if no categories
           setHasMore(false);
           return;
         }
-      
+
         console.log("Top categories:", sortedCategories);
-      
+
         // Create a single API request for the top categories
         paramsNewsData.delete('category');
         sortedCategories.forEach((category) => paramsNewsData.append('category', category));
-      
+
         try {
           const RSSresponse = await axios.get(
             `https://newsdata.io/api/1/latest?${paramsNewsData.toString()}`
           );
-      
+
           if (RSSresponse.data && RSSresponse.data.results) {
             // Remove duplicates if duplicate is true
             const seen = new Set();
@@ -92,13 +93,13 @@ const NewsFeed = () => {
               seen.add(article.article_id);
               return true;
             });
-      
+
             if (isNewSearch) {
               setArticles(uniqueNews);
             } else {
               setArticles((prev) => [...prev, ...uniqueNews]);
             }
-      
+
             setNextPage(RSSresponse.data.nextPage || null);
             setHasMore(!!RSSresponse.data.nextPage);
           } else {
@@ -110,7 +111,7 @@ const NewsFeed = () => {
           setHasMore(false);
           setArticles([]);
         }
-      }            
+      }
       else {
         const RSSresponse = await axios.get(
           `https://newsdata.io/api/1/latest?${paramsNewsData.toString()}`
@@ -178,23 +179,17 @@ const NewsFeed = () => {
   };
   const handleSelectArticle = (article) => {
     setSelectedArticle(article);
+    setSelectedEmoji(null); // Reset emoji selection
     setAiSummary(''); // Reset the summary whenever a new article is selected
 
     const userRef = doc(db, "users", auth.currentUser.uid);
-    console.log(article)
-  //   if (!auth.categoryClickCount) {
-  //     auth.categoryClickCount = {}; // Initialize if it doesn't exist
-  // }
-  //   console.log(auth.categoryClickCount)
-  //   console.log(auth)
-    console.log(userRef)
     article.category.forEach(updateClickCount)
     console.log(auth.categoryClickCount)
-    async function updateClickCount(categoryName,index,array){
-      if(!(categoryName in auth.categoryClickCount)) return;
+    async function updateClickCount(categoryName, index, array) {
+      if (!(categoryName in auth.categoryClickCount)) return;
       const updatedCount = auth.categoryClickCount[categoryName] + 1;
 
-      console.log(categoryName,updatedCount)
+      console.log(categoryName, updatedCount)
       await updateDoc(userRef, {
         [`categoryClickCount.${categoryName}`]: updatedCount,
       });
@@ -226,6 +221,38 @@ const NewsFeed = () => {
     }
     setSearchQuery(''); // Clear search query when changing filters
     setIsSearching(false); // Reset search state
+  };
+
+  const handleEmojiSelect = (emoji) => {
+    setSelectedEmoji(emoji); // Update the displayed emoji
+    likeHandle(selectedArticle, emoji); // Call the likeHandle function
+  };
+
+  const likeHandle = async (article, emoji) => {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+
+    // Weight for emojis (customize as needed)
+    const emojiWeights = {
+      '👍': 1,
+      '❤️': 2,
+      '👏': 1,
+      '😂': 0.5,
+      '😢': 0.5,
+    };
+
+    const weight = emojiWeights[emoji] || 1; // Default weight is 1
+    console.log(auth.categoryClickCount)
+    article.category.forEach(async (categoryName) => {
+      if (!(categoryName in auth.categoryClickCount)) return;
+
+      const updatedCount = auth.categoryClickCount[categoryName] + weight;
+
+      await updateDoc(userRef, {
+        [`categoryClickCount.${categoryName}`]: updatedCount,
+      });
+
+      auth.fetchCategoryClickCount(); // Refresh locally stored counts
+    });
   };
 
   const generateSummary = async (article) => {
@@ -516,7 +543,29 @@ const NewsFeed = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end gap-4 pt-4">
+                <div className="flex justify-end gap-4 pt-4 relative">
+                  <div className="relative group">
+                    <button
+                      className="text-lg px-3 py-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
+                      title={`React with ${selectedEmoji || '👍'}`}
+                    >
+                      {selectedEmoji || '👍'}
+                    </button>
+
+                    <div className="absolute bottom-full mb-2 left-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 flex gap-2 scale-0 group-hover:scale-100 transition-transform duration-200">
+                      {['👍', '❤️', '👏', '😂', '😢'].map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => handleEmojiSelect(emoji)}
+                          className="text-lg px-2 py-1 hover:bg-gray-200 rounded-full transition-colors"
+                          title={`React with ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <a
                     href={selectedArticle.url}
                     target="_blank"
