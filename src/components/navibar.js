@@ -17,10 +17,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="shadow-md relative z-10 ">
+    <nav className="shadow-md fixed top-0 w-[100%] h-[8vh] backdrop-blur-[10px] z-10 ">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="text-xl font-bold text-gray-800">
+          <Link to="/" className="text-xl font-bold text-gray-800" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             News Feed
           </Link>
           {currentUser && (
