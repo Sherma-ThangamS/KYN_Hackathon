@@ -5,7 +5,8 @@ import axios from 'axios';
 import { Search, X, Globe, Languages, Clock, Loader2, ExternalLink } from 'lucide-react';
 import { Categories, Countries } from './DataValues';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { auth, db } from '../firebase';
+import { useAuth } from '../contexts/AuthContext';
+import {  db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 
 Modal.setAppElement('#root');
@@ -18,8 +19,8 @@ const NewsFeed = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('ta');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [nextPage, setNextPage] = useState(null); // Track the nextPage token
-  const [hasMore, setHasMore] = useState(true); // Track if there are more pages
+  const [nextPage, setNextPage] = useState(null); 
+  const [hasMore, setHasMore] = useState(true); 
   const [loading, setLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
@@ -27,6 +28,7 @@ const NewsFeed = () => {
   const countries = Countries;
   const languages = Language;
   const observer = useRef();
+  const auth = useAuth();
 
   // Format countries/languages data for display
   const formatOptionsData = (data) => {
@@ -55,60 +57,60 @@ const NewsFeed = () => {
       if (selectedCategory && selectedCategory !== "For you") paramsNewsData.append('category', selectedCategory);
       if (searchQuery.trim()) paramsNewsData.append('q', searchQuery.trim());
       if (selectedCategory === "For you") {
-        const news = []
-        console.log(auth.categoryClickCount)
-        const totalInteractions = Array.from(Object.values(auth.categoryClickCount)).reduce((sum, count) => sum + count, 0);
-
-        console.log(totalInteractions)
-
-        let totalArticleCount = 30
-
-        const categoryArticleCounts = {};
-        for (const [category, count] of Object.entries(auth.categoryClickCount)) {
-          categoryArticleCounts[category] = Math.round((count / totalInteractions) * totalArticleCount);
+        console.log(auth.categoryClickCount);
+      
+        // Filter and sort categories based on count
+        const sortedCategories = Object.entries(auth.categoryClickCount)
+          .filter(([, count]) => count > 0) // Exclude categories with zero count
+          .sort(([, countA], [, countB]) => countB - countA)
+          .slice(0, 5)
+          .map(([category]) => category);
+      
+        if (sortedCategories.length === 0) {
+          console.log("No categories with interaction count greater than zero.");
+          setArticles([]); // Clear articles if no categories
+          setHasMore(false);
+          return;
         }
-
-        // let totalAssigned = Object.values(categoryArticleCounts).reduce((sum, count) => sum + count, 0);
-        // if (totalAssigned !== limit) {
-        //   const adjustment = limit - totalAssigned;
-        //   const mostClickedCategory = Object.keys(categoryArticleCounts).reduce((a, b) => categoryArticleCounts[a] > categoryArticleCounts[b] ? a : b);
-        //   categoryArticleCounts[mostClickedCategory] += adjustment;
-        // }
-
-        for (const [category, count] of Object.entries(categoryArticleCounts)) {
-          if (count > 0) {
-            //const categorySkip = (page - 1) * count; // Skip based on the weighted count for pagination
-            paramsNewsData.delete('category')
-            // params.delete('page_size')
-            paramsNewsData.append('category', category);
-            // params.append('page_size',count)
-            console.log(category, count)
-            const RSSresponse = await axios.get(
-              `https://newsdata.io/api/1/latest?${paramsNewsData.toString()}`
-            );
-            if (RSSresponse.data && RSSresponse.data.results) {
-              if (isNewSearch) {
-                setArticles(RSSresponse.data.results);
-              } else {
-                setArticles((prev) => [...prev, ...RSSresponse.data.results]);
-              }
-              setNextPage(RSSresponse.data.nextPage || null);
-              setHasMore(!!RSSresponse.data.nextPage);
+      
+        console.log("Top categories:", sortedCategories);
+      
+        // Create a single API request for the top categories
+        paramsNewsData.delete('category');
+        sortedCategories.forEach((category) => paramsNewsData.append('category', category));
+      
+        try {
+          const RSSresponse = await axios.get(
+            `https://newsdata.io/api/1/latest?${paramsNewsData.toString()}`
+          );
+      
+          if (RSSresponse.data && RSSresponse.data.results) {
+            // Remove duplicates if duplicate is true
+            const seen = new Set();
+            const uniqueNews = RSSresponse.data.results.filter((article) => {
+              if (article.duplicate || seen.has(article.article_id)) return false;
+              seen.add(article.article_id);
+              return true;
+            });
+      
+            if (isNewSearch) {
+              setArticles(uniqueNews);
             } else {
-              setHasMore(false);
-              setArticles([]);
+              setArticles((prev) => [...prev, ...uniqueNews]);
             }
+      
+            setNextPage(RSSresponse.data.nextPage || null);
+            setHasMore(!!RSSresponse.data.nextPage);
+          } else {
+            setHasMore(false);
+            setArticles([]);
           }
+        } catch (error) {
+          console.error("Error fetching news data:", error);
+          setHasMore(false);
+          setArticles([]);
         }
-        // news.sort((a, b) => new Date(b.published) - new Date(a.published))
-        // const seen = new Set();
-        // const uniqueNews = news.filter(n => {
-        //     if (seen.has(n.id)) return false;
-        //     seen.add(n.id);
-        //     return true;
-        // });
-        // setArticles(uniqueNews)
-      }
+      }            
       else {
         const RSSresponse = await axios.get(
           `https://newsdata.io/api/1/latest?${paramsNewsData.toString()}`
@@ -185,7 +187,7 @@ const NewsFeed = () => {
   // }
   //   console.log(auth.categoryClickCount)
   //   console.log(auth)
-    console.log(auth.categoryClickCount)
+    console.log(userRef)
     article.category.forEach(updateClickCount)
     console.log(auth.categoryClickCount)
     async function updateClickCount(categoryName,index,array){
