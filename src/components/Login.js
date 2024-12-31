@@ -58,7 +58,7 @@ const Login = () => {
               </svg>
             </div>
             <h1 className="text-4xl font-bold text-indigo-600">
-              Welcome to Insights Hub
+              Welcome to Newsify
             </h1>
             <p className="text-gray-600 text-lg">
               Your personalized news experience awaits
@@ -110,7 +110,7 @@ const Login = () => {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">Real-time Updates</h3>
+                    <h3 className="font-semibold text-gray-900 mb-1">Real-time Updates </h3>
                     <p className="text-gray-600 text-sm">Latest news as it happens</p>
                   </div>
                 </div>
@@ -125,7 +125,7 @@ const Login = () => {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900 mb-1">AI Summaries</h3>
-                    <p className="text-gray-600 text-sm">Powered by Gemini AI & Currents API</p>
+                    <p className="text-gray-600 text-sm">Powered by Gemini AI & Newsdata.io API</p>
                   </div>
                 </div>
               </div>

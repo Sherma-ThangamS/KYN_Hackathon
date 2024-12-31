@@ -131,16 +131,13 @@ const NewsFeed = () => {
     switch (type) {
       case 'country':
         setSelectedCountry(value);
-        // setSelectedCategory(''); // Clear only category, keep language
+        setSelectedLanguage(''); // Clear only language, keep category
         break;
       case 'language':
         setSelectedLanguage(value);
-        // setSelectedCategory(''); // Clear only category, keep country
         break;
       case 'category':
         setSelectedCategory(value);
-        // setSelectedCountry(''); // Clear both country and language
-        // setSelectedLanguage('');
         break;
       default:
         break;
@@ -290,8 +287,8 @@ const NewsFeed = () => {
               ) : (
                 <span>
                   {selectedCategory && `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} News`}
-                  {selectedCountry && `News from ${Object.keys(countries).find(name => countries[name] === selectedCountry)}`}
-                  {selectedLanguage && `News in ${Object.keys(languages).find(name => languages[name] === selectedLanguage)}`}
+                  {selectedCountry && ` News from ${Object.keys(countries).find(name => countries[name] === selectedCountry)}`}
+                  {selectedLanguage && ` News in ${Object.keys(languages).find(name => languages[name] === selectedLanguage)}`}
                   {!selectedCategory && !selectedCountry && !selectedLanguage && 'Latest News'}
                 </span>
               )}
