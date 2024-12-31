@@ -3,6 +3,9 @@ import axios from 'axios';
 import Modal from 'react-modal';
 import { Search, Loader2, X, ExternalLink, Clock, Globe, Languages } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { useAuth } from '../contexts/AuthContext';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 Modal.setAppElement('#root');
 
@@ -20,6 +23,12 @@ const NewsFeed = () => {
   const [loading, setLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
+
+  const auth = useAuth();
+
+  useEffect(()=>{
+    auth.fetchCategoryClickCount()
+  },[])
 
 
   // Format countries/languages data for display
@@ -41,9 +50,8 @@ const NewsFeed = () => {
           axios.get(`https://api.currentsapi.services/v1/available/regions?apiKey=${apiKey}`),
           axios.get(`https://api.currentsapi.services/v1/available/languages?apiKey=${apiKey}`)
         ]);
-
         if (categoriesRes.data && categoriesRes.data.categories) {
-          setCategories(categoriesRes.data.categories);
+          setCategories(["For you",...categoriesRes.data.categories]);
         }
         if (countriesRes.data && countriesRes.data.regions) {
           // Format countries data: {countryName: countryCode}
@@ -74,15 +82,60 @@ const NewsFeed = () => {
       // Add active filters
       if (selectedCountry) params.append('country', selectedCountry);
       if (selectedLanguage) params.append('language', selectedLanguage);
-      if (selectedCategory) params.append('category', selectedCategory);
+      if (selectedCategory && selectedCategory!=="For you") params.append('category', selectedCategory);
       if (searchQuery.trim()) params.append('keywords', searchQuery.trim());
-      
-      const response = await axios.get(`${url}${params.toString()}`);
-      
-      if (response.data && response.data.news) {
-        setArticles(response.data.news);
-      } else {
-        setArticles([]);
+
+      if(selectedCategory==="For you"){
+        const news = []
+        console.log(auth.categoryClickCount)
+        const totalInteractions = Array.from(Object.values(auth.categoryClickCount)).reduce((sum, count) => sum + count, 0);
+
+        console.log(totalInteractions)
+
+        let totalArticleCount = 30
+
+        const categoryArticleCounts = {};
+        for (const [category, count] of Object.entries(auth.categoryClickCount)) {
+          categoryArticleCounts[category] = Math.round((count / totalInteractions) * totalArticleCount);
+        }
+
+        // let totalAssigned = Object.values(categoryArticleCounts).reduce((sum, count) => sum + count, 0);
+        // if (totalAssigned !== limit) {
+        //   const adjustment = limit - totalAssigned;
+        //   const mostClickedCategory = Object.keys(categoryArticleCounts).reduce((a, b) => categoryArticleCounts[a] > categoryArticleCounts[b] ? a : b);
+        //   categoryArticleCounts[mostClickedCategory] += adjustment;
+        // }
+
+        for (const [category, count] of Object.entries(categoryArticleCounts)) {
+          if (count > 0) {
+            //const categorySkip = (page - 1) * count; // Skip based on the weighted count for pagination
+            params.delete('category')
+            params.delete('page_size')
+            params.append('category', category);
+            params.append('page_size',count)
+            console.log(category,count)
+            const articles = await (await axios.get(`${url}${params.toString()}`)).data.news
+            console.log(articles)
+            news.push(...articles);
+          }
+        }
+        news.sort((a, b) => new Date(b.published) - new Date(a.published))
+        const seen = new Set();
+        const uniqueNews = news.filter(n => {
+            if (seen.has(n.id)) return false;
+            seen.add(n.id);
+            return true;
+        });
+        setArticles(uniqueNews)
+      }
+      else{
+        const response = await axios.get(`${url}${params.toString()}`);
+        
+        if (response.data && response.data.news) {
+          setArticles(response.data.news);
+        } else {
+          setArticles([]);
+        }
       }
     } catch (error) {
       console.error("Error fetching news:", error);
@@ -109,9 +162,28 @@ const NewsFeed = () => {
       await fetchNews();
     }
   };
-  const handleSelectArticle = (article) => {
+  const handleSelectArticle = async (article) => {
     setSelectedArticle(article);
     setAiSummary(''); // Reset the summary whenever a new article is selected
+
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    console.log(article)
+    article.category.forEach(updateClickCount)
+
+    async function updateClickCount(categoryName,index,array){
+      if(!categoryName in auth.categoryClickCount) return;
+      const updatedCount = auth.categoryClickCount[categoryName] + 1;
+
+      console.log(categoryName,updatedCount)
+      await updateDoc(userRef, {
+        [`categoryClickCount.${categoryName}`]: updatedCount,
+      });
+
+      auth.fetchCategoryClickCount()
+    }
+
+
+
   };
   
   const handleClearSearch = () => {
