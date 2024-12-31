@@ -76,6 +76,7 @@ const NewsFeed = () => {
       let url = 'https://api.currentsapi.services/v1/search?';
       const params = new URLSearchParams();
       
+      
       // Add API key first
       params.append('apiKey', apiKey);
       
