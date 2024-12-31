@@ -25,6 +25,7 @@ const NewsFeed = () => {
   const [aiSummary, setAiSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [selectedEmoji, setSelectedEmoji] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const categories = Categories;
   const countries = Countries;
   const languages = Language;
@@ -276,6 +277,47 @@ const NewsFeed = () => {
     }
   };
 
+  const speakDescription = (description, language) => {
+    if (!description) {
+      if (isSpeaking) {
+        speechSynthesis.cancel();
+        setIsSpeaking(false);
+      }
+      return;
+    }
+
+    // Check if speech is already happening and stop it
+    if (isSpeaking) {
+      speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(description);
+
+      // Set language dynamically based on the article's language
+      const supportedLanguages = {
+        tamil: 'ta-IN',
+        english: 'en-US',
+        hindi: 'hi-IN',
+        french: 'fr-FR', // Add more as needed
+      };
+      utterance.lang = supportedLanguages[language] || 'en-US'; // Default to English if not found
+
+      utterance.rate = 1; // Adjust speed (1 is normal)
+      utterance.pitch = 1; // Adjust pitch (1 is normal)
+
+      utterance.onstart = () => setIsSpeaking(true); // Mark as speaking
+      utterance.onend = () => setIsSpeaking(false); // Mark as not speaking when done
+
+      speechSynthesis.speak(utterance);
+    } else {
+      alert('Sorry, your browser does not support text-to-speech.');
+    }
+  };
+
+
+
   return (
     <div className="min-h-screen w-full overflow-hidden relative">
       {/* Full-screen animated background */}
@@ -461,7 +503,10 @@ const NewsFeed = () => {
         {/* Article Modal */}
         <Modal
           isOpen={!!selectedArticle}
-          onRequestClose={() => setSelectedArticle(null)}
+          onRequestClose={() => {
+            speakDescription(null); // Stop speaking if modal is closed
+            return setSelectedArticle(null)
+          }}
           className="max-w-3xl mx-auto mt-12 mb-12 bg-white rounded-2xl shadow-xl outline-none p-0 relative"
           overlayClassName="fixed inset-0 bg-black/50 flex items-start justify-center overflow-y-auto px-4"
         >
@@ -544,6 +589,18 @@ const NewsFeed = () => {
 
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-4 pt-4 relative">
+                  {/* Listen Button on the leftmost side */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering the parent `onClick` handler
+                      speakDescription(selectedArticle.description, selectedArticle.language);
+                    }}
+                    className="text-blue-600 hover:underline text-sm flex items-center gap-1"
+                  >
+                    <span>{isSpeaking ? '⏸️ Stop' : '🔊 Listen'}</span> {/* Change text based on speaking state */}
+                  </button>
+
+                  {/* Emoji Reaction Buttons */}
                   <div className="relative group">
                     <button
                       className="text-lg px-3 py-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
@@ -565,9 +622,8 @@ const NewsFeed = () => {
                       ))}
                     </div>
                   </div>
-
                   <a
-                    href={selectedArticle.url}
+                    href={selectedArticle.link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-6 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"

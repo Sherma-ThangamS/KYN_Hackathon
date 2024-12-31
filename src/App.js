@@ -1,8 +1,11 @@
+// App.js
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import Navbar from "./components/Navbar";
-import NewsFeed from "./components/NewsFeed";
-import Login from "./components/Login";
+import Login from './components/Login';
+import NewsFeed from './components/newsfeed1';
+import Navbar from './components/navibar';
+
 
 function App() {
   return (
