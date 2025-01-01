@@ -1,7 +1,8 @@
 # Newsify: A News Aggregator Application
 
-**Newsify** is a news aggregator application designed to enhance community awareness by curating and sharing news from verified local sources. This project is a solution to the problem statement provided in the **News and Information Track**, aimed at delivering accurate, relevant, and personalized news to users.
+**Newsify** is a cutting-edge news aggregation application aimed at enhancing awareness and user engagement by curating and delivering news from verified local and global sources. By integrating advanced web technologies, artificial intelligence (AI), and user-interactive features, Newsify provides a personalized news experience that caters to individual preferences, improves accessibility, and fosters deeper user interaction with the news content.
 
+The project addresses a crucial need in the realm of digital news consumption, where the overwhelming volume of information can be difficult to navigate, and where users require relevant, accurate, and timely content. By combining personalized news feeds, emoji-based reactions, AI summary and text-to-speech functionality, Newsify enhances the way users interact with news, ensuring that they not only consume information but also engage with it meaningfully.
 ---
 
 ## Features
