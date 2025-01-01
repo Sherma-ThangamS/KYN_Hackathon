@@ -87,14 +87,23 @@ The application uses **AI summarization** to generate concise summaries of news 
 
 ```mermaid
     graph RL
-        Application --> Users((Users))
-        API_Pipeline --> Application
-        API_Pipeline --> Custom_AI_Summarization
-        Application <--> Custom_AI_Summarization
-        User_Data[(User_Data)] --> Application
-        Local_News --> API_Pipeline
-        International_News --> API_Pipeline
-        Miscellaneous_Sources --> API_Pipeline 
+    Users((Users)) --> Application[React Application]
+    Application --> Firebase_Auth[Firebase Authentication]
+    Application --> Firestore[Firestore Database]
+    Application --> API_Pipeline[API Pipeline]
+    API_Pipeline --> News_API[News API]
+    API_Pipeline --> Custom_AI_Summarization[Custom AI Summarization]
+    Firebase_Auth --> User_Data[(User Data in Firestore)]
+    Firestore --> Application
+    News_API --> API_Pipeline
+    Local_News --> API_Pipeline
+    International_News --> API_Pipeline
+    Miscellaneous_Sources --> API_Pipeline
+    Custom_AI_Summarization --> Firestore
+    Cron_Job["Cloud Function (Cron Job)"] --> Firestore
+    Cron_Job --> News_API
+    Firestore --> Cron_Job
+    Users <-- Personalized Emails --> Cron_Job
 ```
 ## High Level Design
 ```mermaid
