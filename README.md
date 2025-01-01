@@ -1,3 +1,5 @@
+**Live Website**: [Newsify on Vercel](https://kyn-hackathon.vercel.app/)
+
 # Newsify: A News Aggregator Application
 
 **Newsify** is a cutting-edge news aggregation application aimed at enhancing awareness and user engagement by curating and delivering news from verified local and global sources. By integrating advanced Web Technologies, Artificial Intelligence (AI), and User-Interactive features, Newsify provides a personalized news experience that caters to individual preferences, improves accessibility, and fosters deeper user interaction with the news content. 
