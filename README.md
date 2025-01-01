@@ -86,7 +86,7 @@ The application uses **AI summarization** to generate concise summaries of news 
 ## Architecture Diagram 
 
 ```mermaid
-    graph RL
+    graph LR
     Users((Users)) --> Application[React Application]
     Application --> Firebase_Auth[Firebase Authentication]
     Application --> Firestore[Firestore Database]
@@ -103,7 +103,7 @@ The application uses **AI summarization** to generate concise summaries of news 
     Cron_Job["Cloud Function (Cron Job)"] --> Firestore
     Cron_Job --> News_API
     Firestore --> Cron_Job
-    Users <-- Personalized Emails --> Cron_Job
+    Cron_Job --> Users((Users))
 ```
 ## High Level Design
 ```mermaid
