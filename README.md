@@ -99,7 +99,7 @@ The application uses **AI summarization** to generate concise summaries of news 
     Local_News --> API_Pipeline
     International_News --> API_Pipeline
     Miscellaneous_Sources --> API_Pipeline
-    Custom_AI_Summarization --> Firestore
+    Custom_AI_Summarization --> Users((Users))
     Cron_Job["Cloud Function (Cron Job)"] --> Firestore
     Cron_Job --> News_API
     Firestore --> Cron_Job
