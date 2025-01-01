@@ -121,7 +121,7 @@ graph LR
     subgraph Firebase
         auth[Firebase Auth]
         firestore[Firestore]
-        hosting[Firebase Hosting]
+        hosting[Versel Hosting]
         auth --> firestore
         WA --> auth
         WA --> firestore
