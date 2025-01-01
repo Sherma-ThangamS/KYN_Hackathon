@@ -41,33 +41,48 @@ The application uses **AI summarization** to generate concise summaries of news 
 
 ## How to Run the Application
 
-1. **Clone the Repository**
+1. **Clone the Repository**  
    ```bash
-   git clone  https://github.com/Sherma-ThangamS/KYN_Hackathon.git
+   git clone https://github.com/Sherma-ThangamS/KYN_Hackathon.git
    cd KYN_Hackathon
    ```
    
-2. **Install Dependencies**
+2. **Install Dependencies**  
     ```bash
     npm install
     ```
 
-3. **Set Up Environment Variables** \
-    Create a .env file and include the following:
+3. **Set Up Environment Variables**  
+    Create a `.env` file and include the following:  
     ```bash
     REACT_APP_GEM_API=Your_Gemini_API_Key
     REACT_APP_NEWS_DATA_API_KEY=Your_News_Data_API_Key
     ```
     
-4. **Start the Application**
+4. **(Optional) Update Firebase Configuration**  
+    If you're using your own Firebase project, update the `firebase.js` file with your Firebase configuration:  
+    ```javascript
+    const firebaseConfig = {
+      apiKey: "Your_API_Key",
+      authDomain: "Your_Project_Auth_Domain",
+      projectId: "Your_Project_ID",
+      storageBucket: "Your_Storage_Bucket",
+      messagingSenderId: "Your_Messaging_Sender_ID",
+      appId: "Your_App_ID",
+    };
+
+    ```
+
+5. **Start the Application**  
     ```bash
     npm start
     ```
-    
-5. **Access the Application** \
-    Open your browser and navigate to http://localhost:3000 (or the specified port).
-    
----
+
+6. **Access the Application**  
+    Open your browser and navigate to `http://localhost:3000` (or the specified port).
+
+--- 
+
 ## Architecture Diagram 
 
 ```mermaid
