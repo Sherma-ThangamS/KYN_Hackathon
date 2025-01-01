@@ -96,7 +96,51 @@ The application uses **AI summarization** to generate concise summaries of news 
         International_News --> API_Pipeline
         Miscellaneous_Sources --> API_Pipeline 
 ```
+## High Level Design
+```mermaid
+graph LR
+    user((User))
+    dev((Developer))
+    news_api[News API]
+    
+    subgraph GitHub
+        repo[Repository] -- Push --> on_push_action[On Push Action]
+        repo -- Merge --> on_merge_action[On Merge Action]
+        on_push_action -- Test --> repo
+    end
+    
+    subgraph Firebase
+        auth[Firebase Auth]
+        firestore[Firestore]
+        hosting[Firebase Hosting]
+        auth --> firestore
+        WA --> auth
+        WA --> firestore
+    end
+    
+    subgraph Cloud Functions
+        CF["Cron Job (Send Personalized News)"]
+        CF --> firestore
+        CF -- Fetches --> news_api
+    end
+    
+    subgraph Frontend
+        React[React Web Application]
+        React --> Firebase
+        React --> CF
+    end
+    
+    dev -- Changes --> repo
+    on_merge_action -- Build --> hosting
+    hosting -- Deploy --> Frontend
+    
+    user -- Sign In --> auth
+    user -- HTTPS Requests --> React
+    React -- API Calls --> CF
+    CF -- Sends Email --> user
+    user -- Browse News --> React
 
+```
 ---
 ## Screenshots
 ![Screenshot 2024-12-31 at 22-08-24 React App](https://github.com/user-attachments/assets/90934b28-117d-4dda-9e51-133097ebabe1)
