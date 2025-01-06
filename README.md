@@ -1,6 +1,10 @@
+**Live Website**: [Newsify on Vercel](https://kyn-hackathon.vercel.app/)
+
 # Newsify: A News Aggregator Application
 
-**Newsify** is a news aggregator application designed to enhance community awareness by curating and sharing news from verified local sources. This project is a solution to the problem statement provided in the **News and Information Track**, aimed at delivering accurate, relevant, and personalized news to users.
+**Newsify** is a cutting-edge news aggregation application aimed at enhancing awareness and user engagement by curating and delivering news from verified local and global sources. By integrating advanced Web Technologies, Artificial Intelligence (AI), and User-Interactive features, Newsify provides a personalized news experience that caters to individual preferences, improves accessibility, and fosters deeper user interaction with the news content. 
+
+The project addresses a crucial need in the realm of digital news consumption, where the overwhelming volume of information can be difficult to navigate, and where users require relevant, accurate, and timely content. By combining **personalized news feeds, emoji-based reactions, AI summary and text-to-speech functionality**, Newsify enhances the way users interact with news, ensuring that they not only consume information but also engage with it meaningfully.
 
 ---
 
@@ -86,17 +90,70 @@ The application uses **AI summarization** to generate concise summaries of news 
 ## Architecture Diagram 
 
 ```mermaid
-    graph RL
-        Application --> Users((Users))
-        API_Pipeline --> Application
-        API_Pipeline --> Custom_AI_Summarization
-        Application <--> Custom_AI_Summarization
-        User_Data[(User_Data)] --> Application
-        Local_News --> API_Pipeline
-        International_News --> API_Pipeline
-        Miscellaneous_Sources --> API_Pipeline 
+    graph LR
+    Users((Users)) --> Application[React Application]
+    Application --> Firebase_Auth[Firebase Authentication]
+    Application --> Firestore[Firestore Database]
+    Application --> API_Pipeline[API Pipeline]
+    API_Pipeline --> News_API[News API]
+    API_Pipeline --> Custom_AI_Summarization[Custom AI Summarization]
+    Firebase_Auth --> User_Data[(User Data in Firestore)]
+    Firestore --> Application
+    News_API --> API_Pipeline
+    Local_News --> API_Pipeline
+    International_News --> API_Pipeline
+    Miscellaneous_Sources --> API_Pipeline
+    Custom_AI_Summarization --> Users((Users))
+    Cron_Job["Cloud Function (Cron Job)"] --> Firestore
+    Cron_Job --> News_API
+    Firestore --> Cron_Job
+    Cron_Job --> Users((Users))
 ```
+## High Level Design
+```mermaid
+graph LR
+    user((User))
+    dev((Developer))
+    news_api[News API]
+    
+    subgraph GitHub
+        repo[Repository] -- Push --> on_push_action[On Push Action]
+        repo -- Merge --> on_merge_action[On Merge Action]
+        on_push_action -- Test --> repo
+    end
+    
+    subgraph Firebase
+        auth[Firebase Auth]
+        firestore[Firestore]
+        hosting[Versel Hosting]
+        auth --> firestore
+        WA --> auth
+        WA --> firestore
+    end
+    
+    subgraph Cloud Functions
+        CF["Cron Job (Send Personalized News)"]
+        CF --> firestore
+        CF -- Fetches --> news_api
+    end
+    
+    subgraph Frontend
+        React[React Web Application]
+        React --> Firebase
+        React --> CF
+    end
+    
+    dev -- Changes --> repo
+    on_merge_action -- Build --> hosting
+    hosting -- Deploy --> Frontend
+    
+    user -- Sign In --> auth
+    user -- HTTPS Requests --> React
+    React -- API Calls --> CF
+    CF -- Sends Email --> user
+    user -- Browse News --> React
 
+```
 ---
 ## Screenshots
 ![Screenshot 2024-12-31 at 22-08-24 React App](https://github.com/user-attachments/assets/90934b28-117d-4dda-9e51-133097ebabe1)
