@@ -17,7 +17,7 @@ Modal.setAppElement('#root');
 const NewsFeed = () => {
   const [articles, setArticles] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Top');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('ta');
   const [searchQuery, setSearchQuery] = useState('');
@@ -218,6 +218,10 @@ const NewsFeed = () => {
         setSelectedLanguage(value);
         break;
       case 'category':
+        if(value===selectedCategory){
+          setSelectedCategory("Top");
+          break;
+        }
         setSelectedCategory(value);
         break;
       default:
@@ -239,9 +243,10 @@ const NewsFeed = () => {
     const emojiWeights = {
       '👍': 1,
       '❤️': 2,
-      '👏': 1,
-      '😂': 0.5,
-      '😢': 0.5,
+      '👏': 2,
+      '😂': 3,
+      '😢': 3,
+      '👎':-1,
     };
 
     const weight = emojiWeights[emoji] || 1; // Default weight is 1
@@ -267,7 +272,7 @@ const NewsFeed = () => {
 
       const prompt = `Please provide a concise summary of the following news article in 3-4 sentences: 
       Title: ${article.title}
-      Content: ${article.description}`;
+      Content: ${article.description}'`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -415,7 +420,8 @@ const NewsFeed = () => {
 
           {/* Categories */}
           <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map((category) => (
+            {categories.map((category) => 
+            (category.trim()!=="top") && (
               <button
                 key={category}
                 onClick={() => handleFilterChange('category', category)}
@@ -437,8 +443,8 @@ const NewsFeed = () => {
               ) : (
                 <span>
                   {selectedCategory && `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} News`}
-                  {selectedCountry && ` News from ${Object.keys(countries).find(name => countries[name] === selectedCountry)}`}
-                  {selectedLanguage && ` News in ${Object.keys(languages).find(name => languages[name] === selectedLanguage)}`}
+                  {selectedCountry && ` from ${Object.keys(countries).find(name => countries[name] === selectedCountry)}`}
+                  {selectedLanguage && ` in ${Object.keys(languages).find(name => languages[name] === selectedLanguage)}`}
                   {!selectedCategory && !selectedCountry && !selectedLanguage && 'Latest News'}
                 </span>
               )}
@@ -493,15 +499,22 @@ const NewsFeed = () => {
           ))}
         </div>
 
+        {/* No Results Message in For use*/}
+        {articles.length === 0 && !loading && selectedCategory==="For you" && (
+          <div className="text-center py-12">
+            <div className="bg-white rounded-lg shadow-sm p-6 max-w-md mx-auto">
+              <p className="text-gray-600">Get Started By Searching Some News..!</p>
+            </div>
+          </div>
+        )}
         {/* No Results Message */}
-        {articles.length === 0 && !loading && (
+        {articles.length === 0 && !loading && selectedCategory!=="For you" && (
           <div className="text-center py-12">
             <div className="bg-white rounded-lg shadow-sm p-6 max-w-md mx-auto">
               <p className="text-gray-600">No articles found. Try different filters or search terms.</p>
             </div>
           </div>
         )}
-
         {/* Article Modal */}
         <Modal
           isOpen={!!selectedArticle}
@@ -612,7 +625,7 @@ const NewsFeed = () => {
                     </button>
 
                     <div className="absolute bottom-full mb-2 left-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 flex gap-2 scale-0 group-hover:scale-100 transition-transform duration-200">
-                      {['👍', '❤️', '👏', '😂', '😢'].map((emoji) => (
+                      {['👍', '❤️', '👏', '😂', '😢','👎'].map((emoji) => (
                         <button
                           key={emoji}
                           onClick={() => handleEmojiSelect(emoji)}
